@@ -43,7 +43,7 @@ struct TodoRow: View {
       Button(action: onToggle) {
         Image(systemName: todo.isCompleted ? "largecircle.fill.circle" : "circle")
           .font(.title2)
-          .foregroundStyle(todo.isCompleted ? .green : .white)
+          .foregroundStyle(todo.isCompleted ? Color.terminalGreen : .white)
       }
       .buttonStyle(.plain)
       .animation(.bouncy, value: todo.isCompleted)
@@ -73,7 +73,7 @@ struct TodoRow: View {
       ZStack {
         VisualEffectView(effect: UIBlurEffect(style: .dark))
         if todo.isCompleted {
-          Color.green.opacity(0.2)
+          Color.terminalGreen.opacity(0.2)
         }
       }
     )
@@ -86,16 +86,19 @@ struct MainContentView: View {
   var body: some View {
     TabView {
       Tab("List", systemImage: "list.bullet.indent") {
-        ContentView()
+        TodoListContentView(search: search)
       }
       Tab("Setting", systemImage: "gear") {
         SettingsView()
       }
 
       Tab("search", systemImage: "magnifyingglass", role: .search) {
-        EmptyView()
+        NavigationStack {
+          TodoListContentView(search: search)
+        }
       }
     }
+    .accentColor(Color.terminalGreen)
     .searchable(text: $search)
     .font(.customBody)
     .foregroundStyle(.white)
@@ -140,13 +143,22 @@ struct ContentView_Previews: PreviewProvider {
   }
 }
 
-struct ContentView: View {
+struct TodoListContentView: View {
   @Environment(\.modelContext) private var modelContext
   @Query(sort: \TodoStore.createdAt, order: .reverse) private var todos: [TodoStore]
   @State private var showAddTodoSheet = false
   @State private var selectedTodo: TodoStore? = nil
   @State private var showDeleteConfirmation = false
   @State private var todoToDelete: TodoStore? = nil
+  var search: String = ""
+
+  private var filteredTodos: [TodoStore] {
+    if search.isEmpty {
+      return todos
+    } else {
+      return todos.filter { $0.title.localizedCaseInsensitiveContains(search) }
+    }
+  }
 
   var body: some View {
     ZStack {
@@ -160,16 +172,6 @@ struct ContentView: View {
             .padding()
 
           Spacer()
-          Button(action: {
-            showAddTodoSheet.toggle()
-          }) {
-            Text("Create +")
-              .font(.customBody)
-              .fontWeight(.bold)
-              .foregroundStyle(.white)
-              .padding()
-              .glassEffect()
-          }
         }
         .padding(.horizontal, 24)
         .padding(.bottom, 16)
@@ -184,10 +186,21 @@ struct ContentView: View {
               .padding(.horizontal, 32)
             Spacer()
           }
+        } else if filteredTodos.isEmpty {
+          VStack {
+            Spacer()
+            Text("No results found for \"\(search)\"")
+              .font(.customBody)
+              .multilineTextAlignment(.center)
+              .foregroundStyle(.white)
+              .padding(.horizontal, 32)
+              .animation(.spring, value: search)
+            Spacer()
+          }
         } else {
           ScrollView {
             VStack(spacing: 15) {
-              ForEach(todos) { todo in
+              ForEach(filteredTodos) { todo in
                 TodoRow(
                   todo: todo,
                   onToggle: { toggleTodo(todo) },
@@ -203,7 +216,7 @@ struct ContentView: View {
             .padding(.horizontal)
           }
           .frame(maxWidth: 700)
-          .animation(.default, value: todos)
+          .animation(.default, value: filteredTodos)
         }
 
         Spacer()
@@ -213,6 +226,17 @@ struct ContentView: View {
         Spacer()
         HStack {
           Spacer()
+          Button(action: {
+            showAddTodoSheet.toggle()
+          }) {
+            Text("Create +")
+              .font(.customBody)
+              .fontWeight(.bold)
+              .foregroundStyle(.white)
+              .padding()
+              .glassEffect()
+          }
+          .padding()
         }
       }
       .sheet(isPresented: $showAddTodoSheet) {
@@ -287,12 +311,17 @@ struct AddTodoView: View {
           }
         }
         .navigationBarTitle("Add Todo", displayMode: .inline)
-        .navigationBarItems(leading: Button("Cancel") {
-          presentationMode.wrappedValue.dismiss()
-        }, trailing: Button("Save") {
-          addTodo()
-          presentationMode.wrappedValue.dismiss()
-        })
+        .navigationBarItems(
+          leading: Button("Cancel") {
+            presentationMode.wrappedValue.dismiss()
+          }
+          .glassEffect(), trailing:
+          Button("Save") {
+            addTodo()
+            presentationMode.wrappedValue.dismiss()
+          }
+          .glassEffect()
+        )
       }
 
       .colorScheme(.dark)

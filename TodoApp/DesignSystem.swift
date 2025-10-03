@@ -12,8 +12,9 @@ extension Font {
 // MARK: - Colors
 
 extension Color {
-  static let darkPrimaryBackground = Color(red: 0.05, green: 0.0, blue: 0.1)
-  static let darkSecondaryBackground = Color(red: 0.1, green: 0.05, blue: 0.2)
+  static let terminalGreen = Color(red: 0.2, green: 0.8, blue: 0.2)
+  static let darkPrimaryBackground = Color(red: 0.0, green: 0.1, blue: 0.05)
+  static let darkSecondaryBackground = Color(red: 0.05, green: 0.2, blue: 0.1)
   static let darkPrimaryText = Color.white
   static let darkSecondaryText = Color.gray
 }
@@ -37,7 +38,7 @@ struct DarkTheme: ViewModifier {
     content
       .background(Color.darkPrimaryBackground.ignoresSafeArea())
       .foregroundColor(Color.darkPrimaryText)
-      .accentColor(.purple)
+      .accentColor(.terminalGreen)
       .colorScheme(.dark)
   }
 }
