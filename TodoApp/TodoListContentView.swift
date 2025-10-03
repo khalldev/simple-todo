@@ -39,70 +39,89 @@ struct TodoRow: View {
   let onDelete: () -> Void
 
   var body: some View {
-    HStack(spacing: 15) {
-      Button(action: onToggle) {
-        Image(systemName: todo.isCompleted ? "largecircle.fill.circle" : "circle")
-          .font(.title2)
-          .foregroundStyle(todo.isCompleted ? Color.terminalGreen : .white)
-      }
-      .buttonStyle(.glass)
-      .animation(.bouncy, value: todo.isCompleted)
-
-      if let emoji = todo.emoji, !emoji.isEmpty {
-        Text(emoji)
-          .font(.title)
-      }
-
-      Text(todo.title)
-        .font(.customBody)
-        .strikethrough(todo.isCompleted)
-        .foregroundStyle(todo.isCompleted ? .white.opacity(0.5) : .white)
-        .animation(.smooth, value: todo.isCompleted)
-        .animation(.spring(), value: todo.title)
-
-      Spacer()
-
-      Button(role: .destructive, action: onDelete) {
-        Image(systemName: "multiply.circle.fill")
-          .foregroundStyle(.red)
-      }
-      .buttonStyle(.glass)
-    }
-    .padding()
-    .background(
-      ZStack {
-        VisualEffectView(effect: UIBlurEffect(style: .dark))
-        if todo.isCompleted {
-          Color.terminalGreen.opacity(0.2)
+    GlassEffectContainer {
+      HStack(spacing: 15) {
+        Button(action: onToggle) {
+          Image(systemName: todo.isCompleted ? "largecircle.fill.circle" : "circle")
+            .font(.title2)
+            .foregroundStyle(todo.isCompleted ? Color.terminalGreen : .white)
         }
+        .buttonStyle(.plain)
+        .animation(.bouncy, value: todo.isCompleted)
+        .glassEffect(in: .rect(cornerRadius: 16.0))
+
+        if let emoji = todo.emoji, !emoji.isEmpty {
+          Text(emoji)
+            .font(.title)
+        }
+
+        Text(todo.title)
+          .font(.customBody)
+          .strikethrough(todo.isCompleted)
+          .foregroundStyle(todo.isCompleted ? .white.opacity(0.5) : .white)
+          .animation(.smooth, value: todo.isCompleted)
+          .animation(.spring(), value: todo.title)
+
+        Spacer()
+
+        Button(role: .destructive, action: onDelete) {
+          Image(systemName: "multiply.circle.fill")
+            .foregroundStyle(.red)
+            .glassEffect(in: .rect(cornerRadius: 16.0))
+        }
+        .buttonStyle(.plain)
       }
-    )
-    .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+      .padding()
+      .background(
+        ZStack {
+          VisualEffectView(effect: UIBlurEffect(style: .dark))
+          if todo.isCompleted {
+            Color.terminalGreen.opacity(0.2)
+          }
+        }
+      )
+      .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+    }
   }
 }
 
 struct MainContentView: View {
   @State var search: String = ""
+  @State private var selectedTab: Int = 0
+  @State private var showAddSheet: Bool = false
+
   var body: some View {
     TabView {
       Tab("List", systemImage: "list.bullet.indent") {
         TodoListContentView(search: search)
+          .tag(0)
       }
+
       Tab("Links", systemImage: "link.circle.fill") {
-        SettingsView()
+        LinksView()
+          .tag(1)
       }
       Tab("Setting", systemImage: "gear") {
         SettingsView()
+          .tag(2)
       }
 
-      Tab("search", systemImage: "magnifyingglass", role: .search) {
-        NavigationStack {
-          TodoListContentView(search: search)
-        }
+      Tab("search", systemImage: "plus", role: .search) {
+        TodoListContentView(search: search)
+          .tag(3)
+      }
+    }
+    .sheet(isPresented: $showAddSheet) {
+      AddTodoView()
+        .presentationDetents([.height(220)])
+    }
+    .onChange(of: selectedTab) {
+      if selectedTab == 3 {
+        showAddSheet = true
+        selectedTab = 0 // Reset selection immediately
       }
     }
     .accentColor(Color.terminalGreen)
-    .searchable(text: $search)
     .font(.customBody)
     .foregroundStyle(.white)
   }
@@ -163,6 +182,55 @@ struct TodoListContentView: View {
     }
   }
 
+  private var doneTodosCount: Int {
+    todos.filter { $0.isCompleted }.count
+  }
+
+  private var undoneTodosCount: Int {
+    todos.count - doneTodosCount
+  }
+
+  var summaryView: some View {
+    HStack {
+      VStack(alignment: .center) {
+        Text("\(undoneTodosCount)")
+          .font(.customTitle)
+          .fontWeight(.bold)
+          .glassEffect(in: .rect(cornerRadius: 16.0))
+          .contentTransition(.numericText())
+          .animation(.spring(response: 0.3, dampingFraction: 0.7), value: undoneTodosCount)
+        Text("To Do")
+          .font(.customBody)
+      }
+      .foregroundColor(.white)
+
+      Spacer()
+
+      VStack(alignment: .center) {
+        Text("\(doneTodosCount)")
+          .font(.customTitle)
+          .fontWeight(.bold)
+          .glassEffect(in: .rect(cornerRadius: 16.0))
+          .contentTransition(.numericText())
+          .animation(.spring(response: 0.3, dampingFraction: 0.7), value: undoneTodosCount)
+        Text("Done")
+          .font(.customBody)
+          .glassEffect(in: .rect(cornerRadius: 16.0))
+      }
+      .foregroundColor(Color.terminalGreen)
+    }
+    .padding()
+    .background(
+      ZStack {
+        VisualEffectView(effect: UIBlurEffect(style: .dark))
+        Color.black.opacity(0.2)
+      }
+    )
+    .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+    .padding(.horizontal)
+    .padding(.bottom, 24)
+  }
+
   var body: some View {
     ZStack {
       Color.black.ignoresSafeArea()
@@ -178,6 +246,10 @@ struct TodoListContentView: View {
         }
         .padding(.horizontal, 24)
         .padding(.bottom, 16)
+
+        if !todos.isEmpty {
+          summaryView
+        }
 
         if todos.isEmpty {
           VStack {
