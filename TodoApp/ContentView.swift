@@ -81,6 +81,65 @@ struct TodoRow: View {
   }
 }
 
+struct MainContentView: View {
+  @State var search: String = ""
+  var body: some View {
+    TabView {
+      Tab("List", systemImage: "list.bullet.indent") {
+        ContentView()
+      }
+      Tab("Setting", systemImage: "gear") {
+        SettingsView()
+      }
+
+      Tab("search", systemImage: "magnifyingglass", role: .search) {
+        EmptyView()
+      }
+    }
+    .searchable(text: $search)
+    .font(.customBody)
+    .foregroundStyle(.white)
+  }
+}
+
+struct ContentView_Previews: PreviewProvider {
+  static var previews: some View {
+    let container = try! ModelContainer(for: TodoStore.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+
+    let sampleTodos = [
+      TodoStore(title: "Finish SwiftUI project", emoji: "👨‍💻", isCompleted: true),
+      TodoStore(title: "Read a book", emoji: "📚"),
+      TodoStore(title: "Go for a run", emoji: "🏃‍♀️"),
+      TodoStore(title: "Buy groceries", emoji: "🛒"),
+      TodoStore(title: "Walk the dog", emoji: "🐕"),
+      TodoStore(title: "Call mom", emoji: "📱"),
+      TodoStore(title: "Water the plants", emoji: "🌱"),
+      TodoStore(title: "Clean the house", emoji: "🧹"),
+      TodoStore(title: "Do laundry", emoji: "🧺"),
+      TodoStore(title: "Meditate for 10 minutes", emoji: "🧘"),
+      TodoStore(title: "Plan weekend trip", emoji: "🏕️"),
+      TodoStore(title: "Learn a new recipe", emoji: "🍳"),
+      TodoStore(title: "Watch a movie", emoji: "🎬"),
+      TodoStore(title: "Write a blog post", emoji: "✍️"),
+      TodoStore(title: "Organize closet", emoji: "👕"),
+      TodoStore(title: "Pay bills", emoji: "🧾"),
+      TodoStore(title: "Fix the leaky faucet", emoji: "🔧"),
+      TodoStore(title: "Practice guitar", emoji: "🎸"),
+      TodoStore(title: "Study for exam", emoji: "📖"),
+      TodoStore(title: "Go to the gym", emoji: "💪"),
+      TodoStore(title: "Bake a cake", emoji: "🎂"),
+      TodoStore(title: "Take out the trash", emoji: "🗑️"),
+    ]
+
+    for todo in sampleTodos {
+      container.mainContext.insert(todo)
+    }
+
+    return MainContentView()
+      .modelContainer(container)
+  }
+}
+
 struct ContentView: View {
   @Environment(\.modelContext) private var modelContext
   @Query(sort: \TodoStore.createdAt, order: .reverse) private var todos: [TodoStore]
@@ -94,7 +153,7 @@ struct ContentView: View {
       Color.black.ignoresSafeArea()
       VStack {
         HStack {
-          Text("Todo List")
+          Text("Simplist")
             .font(.customHeadline)
             .fontWeight(.bold)
             .foregroundStyle(.white)
@@ -110,11 +169,6 @@ struct ContentView: View {
               .foregroundStyle(.white)
               .padding()
               .glassEffect()
-//            Image(systemName: "plus")
-//              .font(.largeTitle)
-//              .foregroundColor(.white)
-//              .padding(16)
-//              .glassEffect()
           }
         }
         .padding(.horizontal, 24)
@@ -261,43 +315,14 @@ struct AddTodoView: View {
   AddTodoView()
 }
 
-struct ContentView_Previews: PreviewProvider {
-  static var previews: some View {
-    let container = try! ModelContainer(for: TodoStore.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
-
-    let sampleTodos = [
-      TodoStore(title: "Finish SwiftUI project", emoji: "👨‍💻", isCompleted: true),
-      TodoStore(title: "Read a book", emoji: "📚"),
-      TodoStore(title: "Go for a run", emoji: "🏃‍♀️"),
-      TodoStore(title: "Buy groceries", emoji: "🛒"),
-      TodoStore(title: "Walk the dog", emoji: "🐕"),
-      TodoStore(title: "Call mom", emoji: "📱"),
-      TodoStore(title: "Water the plants", emoji: "🌱"),
-      TodoStore(title: "Clean the house", emoji: "🧹"),
-      TodoStore(title: "Do laundry", emoji: "🧺"),
-      TodoStore(title: "Meditate for 10 minutes", emoji: "🧘"),
-      TodoStore(title: "Plan weekend trip", emoji: "🏕️"),
-      TodoStore(title: "Learn a new recipe", emoji: "🍳"),
-      TodoStore(title: "Watch a movie", emoji: "🎬"),
-      TodoStore(title: "Write a blog post", emoji: "✍️"),
-      TodoStore(title: "Organize closet", emoji: "👕"),
-      TodoStore(title: "Pay bills", emoji: "🧾"),
-      TodoStore(title: "Fix the leaky faucet", emoji: "🔧"),
-      TodoStore(title: "Practice guitar", emoji: "🎸"),
-      TodoStore(title: "Study for exam", emoji: "📖"),
-      TodoStore(title: "Go to the gym", emoji: "💪"),
-      TodoStore(title: "Bake a cake", emoji: "🎂"),
-      TodoStore(title: "Take out the trash", emoji: "🗑️")
-    ]
-
-    for todo in sampleTodos {
-      container.mainContext.insert(todo)
-    }
-
-    return ContentView()
-      .modelContainer(container)
-  }
-}
+//
+// struct ContentView_Previews: PreviewProvider {
+//
+//
+//    return ContentView()
+//      .modelContainer(container)
+//  }
+// }
 
 struct DeleteConfirmationView: View {
   var onConfirm: () -> Void

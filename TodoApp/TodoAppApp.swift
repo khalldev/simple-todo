@@ -12,9 +12,8 @@ import SwiftUI
 struct TodoAppApp: App {
   var body: some Scene {
     WindowGroup {
-      ContentView()
-        .preferredColorScheme(.dark)
-        .font(.system(.body, design: .monospaced))
+      MainContentView()
+        .darkTheme()
     }
     .modelContainer(for: TodoStore.self)
   }
