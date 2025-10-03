@@ -1,3 +1,5 @@
+
+
 //
 //  ContentView.swift
 //  TodoApp
@@ -5,20 +7,304 @@
 //  Created by Khal on 29/9/25.
 //
 
+import SwiftData
 import SwiftUI
 
-struct ContentView: View {
-    var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
-    }
+struct GlassEffectContainerCustome<Content: View>: View {
+  let content: Content
+
+  init(@ViewBuilder content: () -> Content) {
+    self.content = content()
+  }
+
+  var body: some View {
+    content
+      .padding()
+      .background(
+        VisualEffectView(effect: UIBlurEffect(style: .dark))
+      )
+      .cornerRadius(15)
+  }
 }
 
-#Preview {
+struct VisualEffectView: UIViewRepresentable {
+  var effect: UIVisualEffect?
+  func makeUIView(context _: UIViewRepresentableContext<Self>) -> UIVisualEffectView { UIVisualEffectView() }
+  func updateUIView(_ uiView: UIVisualEffectView, context _: UIViewRepresentableContext<Self>) { uiView.effect = effect }
+}
+
+struct TodoRow: View {
+  let todo: TodoStore
+  let onToggle: () -> Void
+  let onDelete: () -> Void
+
+  var body: some View {
+    HStack(spacing: 15) {
+      Button(action: onToggle) {
+        Image(systemName: todo.isCompleted ? "largecircle.fill.circle" : "circle")
+          .font(.title2)
+          .foregroundStyle(todo.isCompleted ? .green : .white)
+      }
+      .buttonStyle(.plain)
+      .animation(.bouncy, value: todo.isCompleted)
+
+      if let emoji = todo.emoji, !emoji.isEmpty {
+        Text(emoji)
+          .font(.title)
+      }
+
+      Text(todo.title)
+        .font(.customBody)
+        .strikethrough(todo.isCompleted)
+        .foregroundStyle(todo.isCompleted ? .white.opacity(0.5) : .white)
+        .animation(.smooth, value: todo.isCompleted)
+        .animation(.spring(), value: todo.title)
+
+      Spacer()
+
+      Button(role: .destructive, action: onDelete) {
+        Image(systemName: "trash")
+          .foregroundStyle(.red)
+      }
+      .buttonStyle(.plain)
+    }
+    .padding()
+    .background(
+      ZStack {
+        VisualEffectView(effect: UIBlurEffect(style: .dark))
+        if todo.isCompleted {
+          Color.green.opacity(0.2)
+        }
+      }
+    )
+    .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+  }
+}
+
+struct ContentView: View {
+  @Environment(\.modelContext) private var modelContext
+  @Query(sort: \TodoStore.createdAt, order: .reverse) private var todos: [TodoStore]
+  @State private var showAddTodoSheet = false
+  @State private var selectedTodo: TodoStore? = nil
+  @State private var showDeleteConfirmation = false
+  @State private var todoToDelete: TodoStore? = nil
+
+  var body: some View {
+    ZStack {
+      Color.black.ignoresSafeArea()
+      VStack {
+        HStack {
+          Text("Todo List")
+            .font(.customHeadline)
+            .fontWeight(.bold)
+            .foregroundStyle(.white)
+            .padding()
+
+          Spacer()
+          Button(action: {
+            showAddTodoSheet.toggle()
+          }) {
+            Text("Create +")
+              .font(.customBody)
+              .fontWeight(.bold)
+              .foregroundStyle(.white)
+              .padding()
+              .glassEffect()
+//            Image(systemName: "plus")
+//              .font(.largeTitle)
+//              .foregroundColor(.white)
+//              .padding(16)
+//              .glassEffect()
+          }
+        }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 16)
+
+        if todos.isEmpty {
+          VStack {
+            Spacer()
+            Text("Ready to conquer your day? Add your first todo and let's get started!")
+              .font(.customBody)
+              .multilineTextAlignment(.center)
+              .foregroundStyle(.white)
+              .padding(.horizontal, 32)
+            Spacer()
+          }
+        } else {
+          ScrollView {
+            VStack(spacing: 15) {
+              ForEach(todos) { todo in
+                TodoRow(
+                  todo: todo,
+                  onToggle: { toggleTodo(todo) },
+                  onDelete: { todoToDelete = todo
+                    showDeleteConfirmation = true
+                  }
+                )
+                .onTapGesture {
+                  selectedTodo = todo
+                }
+              }
+            }
+            .padding(.horizontal)
+          }
+          .frame(maxWidth: 700)
+          .animation(.default, value: todos)
+        }
+
+        Spacer()
+      }
+
+      VStack {
+        Spacer()
+        HStack {
+          Spacer()
+        }
+      }
+      .sheet(isPresented: $showAddTodoSheet) {
+        AddTodoView()
+          .presentationDetents([.height(220)])
+      }
+      .sheet(item: $selectedTodo) { todo in
+        EditTodoView(todo: todo)
+          .presentationDetents([.height(220)])
+      }
+      .sheet(isPresented: $showDeleteConfirmation) {
+        DeleteConfirmationView(
+          onConfirm: {
+            if let todo = todoToDelete {
+              deleteTodo(todo)
+              showDeleteConfirmation = false
+            }
+          },
+          onCancel: { showDeleteConfirmation = false }
+        )
+        .presentationDetents([.height(150)])
+      }
+    }
+  }
+
+  func toggleTodo(_ todo: TodoStore) {
+    todo.isCompleted.toggle()
+  }
+
+  func deleteTodo(_ todo: TodoStore) {
+    modelContext.delete(todo)
+  }
+}
+
+struct AddTodoView: View {
+  @Environment(\.modelContext) private var modelContext
+  @Environment(\.presentationMode) var presentationMode
+  @State private var newTitle: String = ""
+  @State private var newEmoji: String = ""
+  @State private var showEmojiPicker = false
+  private let suggestions = ["Plan a trip to the beach 🏖️", "Finish my SwiftUI project 👨‍💻", "Read a book 📚", "Go for a run 🏃‍♀️"]
+
+  var body: some View {
+    ZStack {
+      Color.black.ignoresSafeArea()
+      NavigationView {
+        Form {
+          Section(header: Text("New Todo")) {
+            HStack {
+              GlassEffectContainer {
+                ZStack(alignment: .topLeading) {
+                  if newTitle.isEmpty {
+                    SuggestionTypingView(suggestions: suggestions)
+                      .padding(.top, 8)
+                      .padding(.leading, 5)
+                  }
+                  TextEditor(text: $newTitle)
+                    .font(.customBody)
+                    .frame(maxHeight: 100)
+                    .background(.clear)
+                }
+              }
+              Button(action: {
+                showEmojiPicker.toggle()
+              }) {
+                Text(newEmoji.isEmpty ? "😀" : newEmoji)
+                  .font(.largeTitle)
+                  .glassEffect()
+              }
+              .glassEffect()
+            }
+          }
+        }
+        .navigationBarTitle("Add Todo", displayMode: .inline)
+        .navigationBarItems(leading: Button("Cancel") {
+          presentationMode.wrappedValue.dismiss()
+        }, trailing: Button("Save") {
+          addTodo()
+          presentationMode.wrappedValue.dismiss()
+        })
+      }
+
+      .colorScheme(.dark)
+      .sheet(isPresented: $showEmojiPicker) {
+        EmojiPicker(selectedEmoji: $newEmoji)
+          .presentationDetents([.height(600)])
+      }
+    }
+  }
+
+  func addTodo() {
+    let trimmed = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return }
+    let newTodo = TodoStore(title: trimmed, emoji: newEmoji)
+    modelContext.insert(newTodo)
+  }
+}
+
+#Preview("Add Form Todo List") {
+  AddTodoView()
+}
+
+struct ContentView_Previews: PreviewProvider {
+  static var previews: some View {
     ContentView()
+  }
+}
+
+struct DeleteConfirmationView: View {
+  var onConfirm: () -> Void
+  var onCancel: () -> Void
+
+  var body: some View {
+    ZStack {
+      VisualEffectView(effect: UIBlurEffect(style: .dark))
+        .ignoresSafeArea()
+      VStack(spacing: 20) {
+        Text("Are you sure?")
+          .font(.customHeadline)
+          .fontWeight(.bold)
+          .foregroundColor(.white)
+
+        HStack(spacing: 30) {
+          Button(action: onCancel) {
+            Text("Cancel")
+              .font(.customHeadline)
+              .foregroundColor(.white)
+              .padding()
+              .frame(maxWidth: .infinity)
+              .background(Color.gray.opacity(0.5))
+              .cornerRadius(10)
+          }
+
+          Button(action: onConfirm) {
+            Text("Delete")
+              .font(.customHeadline)
+              .foregroundColor(.white)
+              .padding()
+              .frame(maxWidth: .infinity)
+              .background(Color.red)
+              .cornerRadius(10)
+          }
+        }
+        .padding(.horizontal)
+      }
+    }
+    .colorScheme(.dark)
+  }
 }
