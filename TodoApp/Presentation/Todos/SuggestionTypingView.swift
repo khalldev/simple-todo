@@ -11,7 +11,9 @@ struct SuggestionTypingView: View {
   var body: some View {
     Text(displayedText)
       .font(.customBody)
+      .contentTransition(.numericText())
       .foregroundColor(.gray)
+      .lineLimit(1)
       .onAppear(perform: scheduleNextAnimation)
       .onDisappear(perform: cleanup)
       .animation(.spring(response: 0.8, dampingFraction: 0.5, blendDuration: 0.5), value: displayedText)

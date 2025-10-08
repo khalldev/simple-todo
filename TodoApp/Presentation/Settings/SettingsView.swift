@@ -7,19 +7,6 @@ let languageOptions = [
 ]
 
 struct SettingsView: View {
-  init() {
-    let appearance = UINavigationBarAppearance()
-    appearance.configureWithOpaqueBackground()
-    appearance.backgroundColor = UIColor(Color.black)
-    let titleFont = UIFont.monospacedSystemFont(ofSize: 34, weight: .bold)
-    let smallTitleFont = UIFont.monospacedSystemFont(ofSize: 17, weight: .bold)
-    appearance.largeTitleTextAttributes = [.font: titleFont, .foregroundColor: UIColor.white]
-    appearance.titleTextAttributes = [.font: smallTitleFont, .foregroundColor: UIColor.white]
-
-    UINavigationBar.appearance().standardAppearance = appearance
-    UINavigationBar.appearance().scrollEdgeAppearance = appearance
-  }
-
   @State private var showingLanguageSheet = false
   @State private var selectedLanguage = "English"
 

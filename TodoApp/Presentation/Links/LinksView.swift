@@ -177,11 +177,3 @@ struct LinksView: View {
 #Preview {
   LinksView()
 }
-
-// #Preview("Shimmer Effect") {
-//  Shimmer()
-//    .frame(height: 140)
-//    .cornerRadius(16)
-//    .padding()
-//    .background(Color.black)
-// }
