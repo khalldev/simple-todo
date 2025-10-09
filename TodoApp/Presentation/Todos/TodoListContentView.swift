@@ -309,9 +309,13 @@ struct TodoListContentView: View {
             .padding()
           }
         }
-        .sheet(isPresented: $showAddTodoSheet) {
+//        .sheet(isPresented: $showAddTodoSheet) {
+//          AddTodoView()
+//            .presentationDetents([.medium])
+//        }
+        .sheet(isPresented: .constant(true)) {
           AddTodoView()
-            .presentationDetents([.height(180)])
+            .presentationDetents([.height(280)])
         }
         .sheet(item: $selectedTodo) { todo in
           EditTodoView(todo: todo)

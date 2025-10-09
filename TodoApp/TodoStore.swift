@@ -12,13 +12,15 @@ import SwiftData
 final class TodoStore {
   @Attribute(.unique) var id: UUID
   var title: String
+  var todoDescription: String
   var emoji: String?
   var isCompleted: Bool
   var createdAt: Date
 
-  init(title: String, emoji: String? = nil, isCompleted: Bool = false, createdAt: Date = .now) {
+  init(title: String, todoDescription: String = "", emoji: String? = nil, isCompleted: Bool = false, createdAt: Date = .now) {
     id = UUID()
     self.title = title
+    self.todoDescription = todoDescription
     self.emoji = emoji
     self.isCompleted = isCompleted
     self.createdAt = createdAt

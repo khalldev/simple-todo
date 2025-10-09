@@ -18,33 +18,3 @@ extension Color {
   static let darkPrimaryText = Color.white
   static let darkSecondaryText = Color.gray
 }
-
-// MARK: - UI Components & Effects
-
-struct GlassEffect: ViewModifier {
-  func body(content: Content) -> some View {
-    content
-      .padding()
-      .background(
-        .ultraThinMaterial.opacity(0.7)
-      )
-      .cornerRadius(15)
-      .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 10)
-  }
-}
-
-struct DarkTheme: ViewModifier {
-  func body(content: Content) -> some View {
-    content
-      .background(Color.darkPrimaryBackground.ignoresSafeArea())
-      .foregroundColor(Color.darkPrimaryText)
-      .accentColor(.terminalGreen)
-      .colorScheme(.dark)
-  }
-}
-
-extension View {
-  func darkTheme() -> some View {
-    modifier(DarkTheme())
-  }
-}

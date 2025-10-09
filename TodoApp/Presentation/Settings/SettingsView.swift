@@ -47,10 +47,8 @@ struct SettingsView: View {
           LanguageSelectionView(selectedLanguage: $selectedLanguage, isPresented: $showingLanguageSheet)
         }
         .presentationDetents([.height(200)])
-        .darkTheme()
       }
     }
-    .darkTheme()
   }
 }
 
@@ -86,6 +84,5 @@ struct LanguageSelectionView: View {
 struct SettingsView_Previews: PreviewProvider {
   static var previews: some View {
     SettingsView()
-      .darkTheme()
   }
 }

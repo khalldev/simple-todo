@@ -13,7 +13,6 @@ struct TodoAppApp: App {
   var body: some Scene {
     WindowGroup {
       MainContentView()
-        .darkTheme()
     }
     .modelContainer(for: TodoStore.self)
   }

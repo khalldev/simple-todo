@@ -166,7 +166,7 @@ struct LinksView: View {
           }
         }
       }
-      .darkTheme()
+
       .sheet(item: $selectedURL) { url in
         SafariView(url: url)
       }

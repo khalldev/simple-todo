@@ -11,14 +11,16 @@ import SwiftUI
 struct AddTodoView: View {
   @Environment(\.modelContext) private var modelContext
   @Environment(\.presentationMode) var presentationMode
+  @StateObject private var geminiService = GeminiService()
   @State private var newTitle: String = ""
+  @State private var newDescription: String = ""
   @State private var newEmoji: String = ""
   @State private var showEmojiPicker = false
   private let suggestions = ["Plan a trip to beach 🏖️", "Finish SwiftUI project 👨‍💻", "Read a book 📚", "Go for a run 🏃‍♀️"]
 
   var body: some View {
     NavigationView {
-      VStack {
+      VStack(alignment: .leading) {
         HStack(alignment: .center) {
           ZStack(alignment: .topLeading) {
             if newTitle.isEmpty {
@@ -26,17 +28,19 @@ struct AddTodoView: View {
                 .padding(.leading, 5)
                 .padding(.top, 12)
             }
-            HStack {
-              TextField("", text: $newTitle, axis: .vertical)
-                .lineLimit(1 ... 8) // min and max
-              Button(action: {
-                showEmojiPicker.toggle()
-              }) {
-                Text(newEmoji.isEmpty ? "😀" : newEmoji)
-                  .font(.largeTitle)
-                  .glassEffect()
+            VStack {
+              HStack {
+                TextField("", text: $newTitle, axis: .vertical)
+                  .lineLimit(1 ... 8) // min and max
+                Button(action: {
+                  showEmojiPicker.toggle()
+                }) {
+                  Text(newEmoji.isEmpty ? "😀" : newEmoji)
+                    .font(.largeTitle)
+                    .glassEffect()
+                }
+                .glassEffect()
               }
-              .glassEffect()
             }
           }
           .textInputAutocapitalization(.none)
@@ -46,7 +50,39 @@ struct AddTodoView: View {
           .cornerRadius(10)
           .padding()
           .font(.customBody)
+          .glassEffect(in: .rect(cornerRadius: 16))
+        }
+
+        HStack {
+          TextField("Description", text: $geminiService.generatedDescription, axis: .vertical)
+            .lineLimit(3 ... 8)
+            .textInputAutocapitalization(.none)
+            .disableAutocorrection(true)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .cornerRadius(10)
+            .font(.customBody)
+
+          Button(action: {
+            geminiService.generateDescription(for: newTitle)
+          }) {
+            if geminiService.isGenerating {
+              ProgressView()
+                .padding(10)
+            } else {
+              Image(systemName: "sparkles")
+                .font(.system(size: 24))
+                .padding(10)
+            }
+          }
+          .disabled(newTitle.isEmpty || geminiService.isGenerating)
           .glassEffect()
+        }
+        .padding(.horizontal)
+        .glassEffect(in: .rect(cornerRadius: 16))
+        .padding(.top, 16)
+        .onChange(of: geminiService.generatedDescription) {
+          newDescription = geminiService.generatedDescription
         }
       }
       .padding()
@@ -67,7 +103,7 @@ struct AddTodoView: View {
   func addTodo() {
     let trimmed = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return }
-    let newTodo = TodoStore(title: trimmed, emoji: newEmoji)
+    let newTodo = TodoStore(title: trimmed, todoDescription: newDescription, emoji: newEmoji)
     modelContext.insert(newTodo)
   }
 }
