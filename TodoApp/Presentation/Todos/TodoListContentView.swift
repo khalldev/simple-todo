@@ -315,11 +315,10 @@ struct TodoListContentView: View {
 //        }
         .sheet(isPresented: .constant(true)) {
           AddTodoView()
-            .presentationDetents([.height(280)])
         }
         .sheet(item: $selectedTodo) { todo in
           EditTodoView(todo: todo)
-            .presentationDetents([.height(220)])
+            .presentationDetents([.medium])
         }
         .sheet(isPresented: $showDeleteConfirmation) {
           DeleteConfirmationView(

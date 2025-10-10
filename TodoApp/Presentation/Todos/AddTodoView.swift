@@ -12,7 +12,7 @@ struct AddTodoView: View {
   @Environment(\.modelContext) private var modelContext
   @Environment(\.presentationMode) var presentationMode
   @StateObject private var geminiService = GeminiService()
-  @State private var newTitle: String = ""
+  @State private var newTitle: String = "Belajar Berenang"
   @State private var newDescription: String = ""
   @State private var newEmoji: String = ""
   @State private var showEmojiPicker = false
@@ -54,36 +54,52 @@ struct AddTodoView: View {
         }
 
         HStack {
-          TextField("Description", text: $geminiService.generatedDescription, axis: .vertical)
-            .lineLimit(3 ... 8)
-            .textInputAutocapitalization(.none)
-            .disableAutocorrection(true)
+          Text(geminiService.generatedDescription)
+            .contentTransition(.numericText())
+            .animation(.spring(), value: geminiService.generatedDescription)
+            .frame(minHeight: 72, maxHeight: 420)
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
             .cornerRadius(10)
+            .frame(width: .infinity)
             .font(.customBody)
-
-          Button(action: {
-            geminiService.generateDescription(for: newTitle)
-          }) {
-            if geminiService.isGenerating {
-              ProgressView()
-                .padding(10)
-            } else {
-              Image(systemName: "sparkles")
-                .font(.system(size: 24))
-                .padding(10)
-            }
-          }
-          .disabled(newTitle.isEmpty || geminiService.isGenerating)
-          .glassEffect()
         }
-        .padding(.horizontal)
+        .frame(maxWidth: .infinity)
+        .overlay(alignment: .bottomTrailing) {
+          if !newTitle.isEmpty {
+            Button(action: {
+              geminiService.generateDescription(for: newTitle)
+            }) {
+              if geminiService.isGenerating {
+                ProgressView()
+                  .padding(10)
+              } else {
+                Image(systemName: "sparkles")
+                  .font(.system(size: 24))
+                  .padding(10)
+              }
+            }
+            .disabled(newTitle.isEmpty || geminiService.isGenerating)
+            .glassEffect(in: .rect(cornerRadius: 200))
+            .padding()
+          }
+        }
         .glassEffect(in: .rect(cornerRadius: 16))
         .padding(.top, 16)
         .onChange(of: geminiService.generatedDescription) {
           newDescription = geminiService.generatedDescription
         }
+
+//        HStack {
+//
+//        }
+//        .frame(width: .infinity)
+//        .padding(.horizontal)
+//        .glassEffect(in: .rect(cornerRadius: 16))
+//        .padding(.top, 16)
+//        .onChange(of: geminiService.generatedDescription) {
+//          newDescription = geminiService.generatedDescription
+//        }
       }
       .padding()
       .navigationBarTitle("Add Todo", displayMode: .inline)
