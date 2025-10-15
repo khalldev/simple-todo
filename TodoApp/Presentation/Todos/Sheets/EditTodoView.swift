@@ -6,7 +6,7 @@ struct EditTodoView: View {
 
   private var todoDescription: Binding<String> {
     Binding(
-      get: { todo.todoDescription ?? "" },
+      get: { todo.todoDescription },
       set: { todo.todoDescription = $0 }
     )
   }

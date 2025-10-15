@@ -25,8 +25,6 @@ struct EmojiPicker: View {
 
   var body: some View {
     ZStack {
-      VisualEffectView(effect: UIBlurEffect(style: .dark))
-        .ignoresSafeArea()
       VStack {
         HStack {
           Text("Select an Emoji")

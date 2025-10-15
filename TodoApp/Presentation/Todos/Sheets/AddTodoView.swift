@@ -26,10 +26,12 @@ struct AddTodoView: View {
   }
 
   func addTodo() {
+    print(newTitle)
     let trimmed = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return }
     let newTodo = TodoStore(title: trimmed, todoDescription: newDescription, emoji: newEmoji)
     modelContext.insert(newTodo)
+    try? modelContext.save()
   }
 }
 
