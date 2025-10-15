@@ -72,15 +72,6 @@ struct TodoRow: View {
     }
     .padding()
     .glassEffect(in: .rect(cornerRadius: 16.0))
-//    .background(
-//      ZStack {
-//        VisualEffectView(effect: UIBlurEffect(style: .dark))
-//        if todo.isCompleted {
-//          Color.terminalGreen.opacity(0.2)
-//        }
-//      }
-//    )
-//    .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
   }
 }
 
@@ -309,12 +300,9 @@ struct TodoListContentView: View {
             .padding()
           }
         }
-//        .sheet(isPresented: $showAddTodoSheet) {
-//          AddTodoView()
-//            .presentationDetents([.medium])
-//        }
-        .sheet(isPresented: .constant(true)) {
+        .sheet(isPresented: $showAddTodoSheet) {
           AddTodoView()
+            .presentationDetents([.medium])
         }
         .sheet(item: $selectedTodo) { todo in
           EditTodoView(todo: todo)

@@ -3,7 +3,8 @@ import SwiftUI
 
 struct SuggestionTypingView: View {
   let suggestions: [String]
-  @State private var displayedText: String = ""
+
+  @State private var displayedText: String = "Plan a trip to beach 🏖️"
   @State private var currentSuggestionIndex: Int = 0
   @State private var isDeleting: Bool = false
   @State private var timer: Timer?

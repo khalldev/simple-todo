@@ -7,6 +7,7 @@
 
 import LinkPresentation
 import SafariServices
+import SwiftData
 import SwiftUI
 import UIKit
 
@@ -34,13 +35,6 @@ struct Shimmer: View {
         }
       }
   }
-}
-
-#Preview {
-  Shimmer()
-    .frame(height: 140)
-    .cornerRadius(16)
-    .padding()
 }
 
 struct LPLinkViewWrapper: UIViewRepresentable {
@@ -97,21 +91,13 @@ extension URL: Identifiable {
   public var id: String { absoluteString }
 }
 
-struct LinkItem: Identifiable {
-  let id = UUID()
-  let name: String
-  let url: String
-  let createdAt: Date
-}
-
 struct LinksView: View {
-  @State private var selectedURL: URL?
+  @Environment(\.modelContext) private var modelContext
+  @Query(sort: \LinkStore.createdAt, order: .reverse) private var links: [LinkStore]
 
-  let links: [LinkItem] = [
-    LinkItem(name: "Glass Effect", url: "https://developer.apple.com/documentation/SwiftUI/Applying-Liquid-Glass-to-custom-views", createdAt: Date()),
-    LinkItem(name: "Google", url: "https://www.google.com", createdAt: Date()),
-    LinkItem(name: "Apple", url: "https://www.apple.com", createdAt: Date().addingTimeInterval(-86400)),
-  ]
+  @State private var selectedURL: URL?
+  @State private var showingAddLinkSheet = false
+  @State private var linkToEdit: LinkStore?
 
   var body: some View {
     ZStack {
@@ -125,29 +111,18 @@ struct LinksView: View {
                   selectedURL = url
                 }
               }) {
-                VStack(alignment: .leading, spacing: 12) {
-                  HStack {
-                    Text(link.name)
-                      .font(.customBody)
-                    Spacer()
-                    Image(systemName: "link")
-                      .foregroundColor(.terminalGreen)
-                  }
-                  .padding(.bottom, 18)
-
-                  if let url = URL(string: link.url) {
-                    AsyncLinkPreview(url: url)
-                      .frame(height: 140)
-                      .cornerRadius(16)
-                      .clipped()
-                  }
-
-                  HStack {
-                    Spacer()
-                    Text(link.createdAt.formatted(.relative(presentation: .named)))
-                      .font(.customBody)
-                      .foregroundColor(.gray)
-                  }
+                linkView(for: link)
+              }
+              .contextMenu {
+                Button {
+                  linkToEdit = link
+                } label: {
+                  Label("Edit", systemImage: "pencil")
+                }
+                Button(role: .destructive) {
+                  deleteLink(link)
+                } label: {
+                  Label("Delete", systemImage: "trash")
                 }
               }
               .padding()
@@ -164,16 +139,73 @@ struct LinksView: View {
               .font(.customHeadline)
               .foregroundColor(.white)
           }
+          ToolbarItem(placement: .navigationBarTrailing) {
+            Button(action: { showingAddLinkSheet = true }) {
+              Image(systemName: "plus")
+            }
+          }
         }
       }
-
       .sheet(item: $selectedURL) { url in
         SafariView(url: url)
       }
+      .sheet(isPresented: $showingAddLinkSheet) {
+        AddLinkView()
+      }
+      .sheet(item: $linkToEdit) { link in
+        EditLinkView(link: link)
+      }
     }
+  }
+
+  @ViewBuilder
+  private func linkView(for link: LinkStore) -> some View {
+    VStack(alignment: .leading, spacing: 12) {
+      HStack {
+        Text(link.name)
+          .font(.customBody)
+        Spacer()
+        Image(systemName: "link")
+          .foregroundColor(.terminalGreen)
+      }
+      .padding(.bottom, 18)
+
+      if let url = URL(string: link.url) {
+        AsyncLinkPreview(url: url)
+          .frame(height: 140)
+          .cornerRadius(16)
+          .clipped()
+      }
+
+      HStack {
+        Spacer()
+        Text(link.createdAt.formatted(.relative(presentation: .named)))
+          .font(.customBody)
+          .foregroundColor(.gray)
+      }
+    }
+  }
+
+  private func deleteLink(_ link: LinkStore) {
+    modelContext.delete(link)
   }
 }
 
 #Preview {
-  LinksView()
+  do {
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try ModelContainer(for: LinkStore.self, configurations: config)
+
+    let mockLinks = [
+      LinkStore(name: "Glass Effect", url: "https://developer.apple.com/documentation/SwiftUI/Applying-Liquid-Glass-to-custom-views"),
+      LinkStore(name: "Google", url: "https://www.google.com"),
+      LinkStore(name: "Apple", url: "https://www.apple.com", createdAt: Date().addingTimeInterval(-86400)),
+    ]
+    mockLinks.forEach { container.mainContext.insert($0) }
+
+    return LinksView()
+      .modelContainer(container)
+  } catch {
+    fatalError("Failed to create model container for preview: \(error.localizedDescription)")
+  }
 }
